@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Code Reviewer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<h1>AI Code Reviewer</h1>
+
+<form id="reviewForm">
+    <input name="filename" placeholder="Filename (ex: test.py)">
+    <textarea name="code" placeholder="Paste your code here"></textarea>
+    <button type="submit">Review Code</button>
+</form>
+
+<h2>Output</h2>
+<h2>Output</h2>
+
+<div class="json-container">
+    <button id="copyJsonBtn">Copy JSON</button>
+    <pre id="output" class="json-output"></pre>
+</div>
+
+<script src="/static/main.js"></script>
+</body>
+</html>

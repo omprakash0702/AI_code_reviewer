@@ -1,0 +1,8 @@
+LICENSE
+README.md
+pyproject.toml
+./server/app.py
+aicodereviewer.egg-info/PKG-INFO
+aicodereviewer.egg-info/SOURCES.txt
+aicodereviewer.egg-info/dependency_links.txt
+aicodereviewer.egg-info/top_level.txt

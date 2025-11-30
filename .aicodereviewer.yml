@@ -1,0 +1,13 @@
+languages:
+  - python
+  - javascript
+
+lint: true
+security: true
+style: true
+ai_suggestions: true
+auto_fix: false
+
+ignore_paths:
+  - "docs/**"
+  - "third_party/**"

@@ -1,0 +1,43 @@
+name: CI Checks
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Lint with flake8
+        run: |
+          flake8 server tests
+
+      - name: Lint with pylint
+        run: |
+          pylint server --disable=C0114,C0115,C0116
+
+      - name: Security Scan with Bandit
+        run: |
+          bandit -r server
+
+      - name: Check formatting with Black
+        run: |
+          black --check server
+
+      - name: Run Tests
+        run: |
+          pytest -q

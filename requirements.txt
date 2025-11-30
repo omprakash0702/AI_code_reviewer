@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pydantic
+flake8
+pylint
+bandit==1.7.5
+black
+autopep8
+httpx
+requests
+pytest
+pytest-asyncio
+pytest-mock
+Flask
