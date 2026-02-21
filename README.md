@@ -1,4 +1,4 @@
-AI Code Reviewer & Auto-Fix Tool
+# AI Code Reviewer & Auto-Fix Tool
 
 
 
@@ -7,23 +7,23 @@ AI Code Reviewer & Auto-Fix Tool
 
 
 
-An AI-powered Code Review & Auto-Fix Tool that analyzes source code using:
+## An AI-powered Code Review & Auto-Fix Tool that analyzes source code using:
 
-Static analyzers (Flake8, Pylint, Bandit, ESLint)
+-Static analyzers (Flake8, Pylint, Bandit, ESLint)
 
-OpenAI for intelligent review
+-OpenAI for intelligent review
 
-Safe patch generation using unified diffs
+-Safe patch generation using unified diffs
 
-It can be used as:
+## It can be used as:
 
-A local web app
+-A local web app
 
-A backend API
+-A backend API
 
-A GitHub PR reviewer (CI/CD)
+-A GitHub PR reviewer (CI/CD)
 
-🚀 Features
+## 🚀 Features
 
 ✅ Detects code quality, style & security issues
 
@@ -41,21 +41,21 @@ A GitHub PR reviewer (CI/CD)
 
 ✅ Beginner-friendly & resume-ready
 
-🧱 Tech Stack
+## 🧱 Tech Stack
 
-Backend: FastAPI
+-Backend: FastAPI
 
-AI: OpenAI API
+-AI: OpenAI API
 
-Static Analysis: Flake8, Pylint, Bandit, ESLint
+-Static Analysis: Flake8, Pylint, Bandit, ESLint
 
-Diff Engine: Unified Diff Patch
+-Diff Engine: Unified Diff Patch
 
-Testing: Pytest
+-Testing: Pytest
 
-Deployment: Local / Render / HuggingFace
 
-📂 Project Structure
+## 📂 Project Structure
+```
 aicodereviewer/
 ├── server/
 │   ├── ai/
@@ -69,24 +69,26 @@ aicodereviewer/
 ├── README.md
 ├── requirements.txt
 └── .env
-
-⚙️ Installation
+```
+## ⚙️ Installation
+```
 git clone https://github.com/your-username/aicodereviewer.git
 cd aicodereviewer
 python -m venv venv
 venv\Scripts\activate   # Windows
 pip install -r requirements.txt
+```
 
 🔑 Setup Environment
-
+```
 Create a .env file:
 
 AI_API_KEY=your_openai_api_key
 AI_MODEL=gpt-4o-mini
 AI_API_URL=https://api.openai.com/v1/chat/completions
-
+```
 ▶️ Run the Server
-uvicorn server.app:app --reload
+-uvicorn server.app:app --reload
 
 
 Open:
@@ -121,6 +123,7 @@ curl -X POST http://127.0.0.1:8000/review \
 🧪 Run Tests
 pytest -q
 
+
 📈 Future Enhancements
 
 GitHub PR Bot (Automatic Reviews)
@@ -133,12 +136,7 @@ Code Complexity Metrics
 
 Deployment on HuggingFace / Render
 
-🧑‍💻 Author
 
-Your Name
-Computer Science Graduate | Python & ML Developer
-
-📄 License
 
 This project is licensed under the MIT License — see the LICENSE
  file.
