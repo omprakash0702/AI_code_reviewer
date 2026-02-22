@@ -79,7 +79,7 @@ venv\Scripts\activate   # Windows
 pip install -r requirements.txt
 ```
 
-🔑 Setup Environment
+### 🔑 Setup Environment
 ```
 Create a .env file:
 
@@ -87,7 +87,8 @@ AI_API_KEY=your_openai_api_key
 AI_MODEL=gpt-4o-mini
 AI_API_URL=https://api.openai.com/v1/chat/completions
 ```
-▶️ Run the Server
+### ▶️ Run the Server
+```
 -uvicorn server.app:app --reload
 
 
@@ -119,24 +120,24 @@ curl -X POST http://127.0.0.1:8000/review \
   "success": true,
   "error": null
 }
-
-🧪 Run Tests
-pytest -q
-
-
-📈 Future Enhancements
-
-GitHub PR Bot (Automatic Reviews)
-
-Web UI Dashboard
-
-Multi-language Support
-
-Code Complexity Metrics
-
-Deployment on HuggingFace / Render
+```
+### 🧪 Run Tests
+- pytest -q
 
 
+## 📈 Future Enhancements
 
-This project is licensed under the MIT License — see the LICENSE
+- GitHub PR Bot (Automatic Reviews)
+
+- Web UI Dashboard
+
+- Multi-language Support
+
+-  Code Complexity Metrics
+
+- Deployment on HuggingFace / Render
+
+
+
+ This project is licensed under the MIT License — see the LICENSE
  file.
