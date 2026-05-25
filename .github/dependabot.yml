@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # Python — backend dependencies
+  # Python — patch + minor only
   - package-ecosystem: pip
     directory: /
     schedule:
@@ -9,17 +9,15 @@ updates:
       day: monday
       time: "08:00"
       timezone: UTC
-    groups:
-      dev-tools:
-        patterns: ["flake8", "pylint", "bandit", "black", "pytest*"]
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - python
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 3
+    labels: [dependencies, python]
     commit-message:
       prefix: "chore(deps)"
 
-  # npm — frontend dependencies (patch + minor only, no major version jumps)
+  # npm — patch + minor only, never major
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -27,31 +25,15 @@ updates:
       day: monday
       time: "08:00"
       timezone: UTC
-    groups:
-      react-ecosystem:
-        patterns: ["react", "react-dom", "@types/react*"]
-        update-types: ["minor", "patch"]
-      vite-ecosystem:
-        patterns: ["vite", "@vitejs/*"]
-        update-types: ["minor", "patch"]
-      ui-libs:
-        patterns: ["framer-motion", "lucide-react", "recharts", "clsx", "tailwindcss", "autoprefixer", "postcss"]
-        update-types: ["minor", "patch"]
     ignore:
-      - dependency-name: "tailwindcss"
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "vite"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "framer-motion"
-        update-types: ["version-update:semver-major"]
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - javascript
+    open-pull-requests-limit: 3
+    labels: [dependencies, javascript]
     commit-message:
       prefix: "chore(deps)"
 
-  # GitHub Actions — keep action versions current
+  # GitHub Actions — minor + patch only
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -59,9 +41,10 @@ updates:
       day: monday
       time: "08:00"
       timezone: UTC
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - github-actions
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    open-pull-requests-limit: 3
+    labels: [dependencies, github-actions]
     commit-message:
       prefix: "ci(deps)"

@@ -34,6 +34,7 @@ jobs:
     name: Deploy backend → Render
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Check deploy hook secret is configured
@@ -96,6 +97,7 @@ jobs:
     name: Deploy frontend → GitHub Pages
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    if: github.ref == 'refs/heads/main'
     permissions:
       contents: write
 
