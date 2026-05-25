@@ -4,7 +4,7 @@ pydantic
 python-dotenv
 flake8
 pylint
-bandit==1.7.5
+bandit==1.9.4
 black
 autopep8
 httpx
