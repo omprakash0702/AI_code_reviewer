@@ -1,8 +1,11 @@
 import pytest
+
 pytest.skip("Analyzer behavior updated; skipping legacy tests", allow_module_level=True)
 
-from server.analyzers.js_analyzer import analyze_js
 import tempfile
+
+from server.analyzers.js_analyzer import analyze_js
+
 
 def test_js_analyzer_basic():
     code = "let x=1; console.log(x);"

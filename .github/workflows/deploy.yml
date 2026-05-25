@@ -1,0 +1,142 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_health_check:
+        description: Skip health check after deploy
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+# Only one deploy at a time — never race
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Deploy backend to Render
+  # Requires secret: RENDER_DEPLOY_HOOK_URL
+  # Set it in: GitHub → Settings → Secrets → Actions
+  # Get it from: Render dashboard → your service → Settings → Deploy Hook
+  # ─────────────────────────────────────────────────────────────
+  backend:
+    name: Deploy backend → Render
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check deploy hook secret is configured
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "::notice::RENDER_DEPLOY_HOOK_URL not set — skipping backend deploy."
+            echo "To enable: add RENDER_DEPLOY_HOOK_URL to GitHub → Settings → Secrets."
+            exit 0
+          fi
+          echo "Deploy hook configured."
+
+      - name: Trigger Render deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          HTTP=$(curl -sf -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+            -w "%{http_code}" -o /dev/null || echo "000")
+          echo "Render hook response: HTTP $HTTP"
+          if [ "$HTTP" != "200" ] && [ "$HTTP" != "201" ]; then
+            echo "::error::Render deploy hook returned HTTP $HTTP"
+            exit 1
+          fi
+          echo "Deploy triggered."
+
+      - name: Wait for backend to become healthy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' && secrets.API_URL != '' && github.event.inputs.skip_health_check != 'true' }}
+        run: |
+          echo "Waiting for ${{ secrets.API_URL }} to be healthy..."
+          for i in $(seq 1 20); do
+            STATUS=$(curl -sf "${{ secrets.API_URL }}/" \
+              -o response.json -w "%{http_code}" --max-time 10 || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Healthy after $i attempt(s)"
+              cat response.json
+              exit 0
+            fi
+            echo "  Attempt $i/20 — HTTP $STATUS, retrying in 15s..."
+            sleep 15
+          done
+          echo "::error::Health check failed after 20 attempts (5 min)"
+          exit 1
+
+      - name: Smoke test /review endpoint
+        if: ${{ secrets.API_URL != '' }}
+        run: |
+          HTTP=$(curl -sf -X POST "${{ secrets.API_URL }}/review" \
+            -H "Content-Type: application/json" \
+            -d '{"filename":"smoke.py","code":"x=1","analysis":{}}' \
+            -o /dev/null -w "%{http_code}" --max-time 30 || echo "000")
+          if [ "$HTTP" = "200" ]; then
+            echo "✅ /review smoke test passed"
+          else
+            echo "::warning::/review returned HTTP $HTTP — API may be degraded"
+          fi
+
+  # ─────────────────────────────────────────────────────────────
+  # Deploy frontend to GitHub Pages
+  # Requires: GitHub → Settings → Pages → Source: gh-pages branch
+  # ─────────────────────────────────────────────────────────────
+  frontend:
+    name: Deploy frontend → GitHub Pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and build
+        working-directory: frontend
+        run: |
+          npm install
+          npm run build
+        env:
+          NODE_ENV: production
+          # Inject deployed API URL so frontend talks to production, not localhost
+          VITE_API_URL: ${{ secrets.API_URL }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./frontend/dist
+          commit_message: "deploy: frontend @ ${{ github.sha }}"
+          force_orphan: true
+
+  # ─────────────────────────────────────────────────────────────
+  # Open an issue if the deploy pipeline itself fails
+  # ─────────────────────────────────────────────────────────────
+  notify-failure:
+    name: Notify on failure
+    needs: [backend, frontend]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const url = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `🚨 Deploy failed — ${context.sha.slice(0, 7)}`,
+              body:  `Deploy pipeline failed.\n\n**Commit:** ${context.sha}\n**Run:** ${url}\n\ncc @${context.actor}`,
+              labels: ['deploy-failure', 'bug'],
+            });

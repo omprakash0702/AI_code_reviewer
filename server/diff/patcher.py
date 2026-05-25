@@ -1,5 +1,6 @@
 import difflib
 
+
 class PatchError(Exception):
     pass
 
@@ -12,10 +13,7 @@ def generate_diff(original: str, modified: str, filename="file"):
     modified_lines = modified.splitlines(keepends=True)
 
     diff = difflib.unified_diff(
-        original_lines,
-        modified_lines,
-        fromfile=f"a/{filename}",
-        tofile=f"b/{filename}"
+        original_lines, modified_lines, fromfile=f"a/{filename}", tofile=f"b/{filename}"
     )
 
     return "".join(diff)

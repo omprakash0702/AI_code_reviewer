@@ -1,7 +1,9 @@
 import pytest
+
 pytest.skip("patcher.py no longer used in project", allow_module_level=True)
 
-from server.diff.patcher import generate_diff, apply_patch, PatchError
+from server.diff.patcher import PatchError, apply_patch, generate_diff
+
 
 def test_generate_diff():
     original = "print('hello')\n"
@@ -11,12 +13,14 @@ def test_generate_diff():
     assert "+++ b/test.py" in diff
     assert "@@" in diff
 
+
 def test_apply_valid_patch():
     original = "x = 1\n"
     updated = "x = 2\n"
     diff = generate_diff("a.py", original, updated)
     patched = apply_patch(original, diff)
     assert patched == updated
+
 
 def test_apply_invalid_patch():
     original = "x = 1\n"

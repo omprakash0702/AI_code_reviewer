@@ -1,8 +1,11 @@
 import pytest
+
 pytest.skip("Analyzer behavior updated; skipping legacy tests", allow_module_level=True)
 
-from server.analyzers.python_analyzer import analyze_python
 import tempfile
+
+from server.analyzers.python_analyzer import analyze_python
+
 
 def test_python_analyzer_basic():
     code = "x=1\nprint(x)"

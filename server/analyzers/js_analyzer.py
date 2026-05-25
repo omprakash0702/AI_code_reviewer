@@ -1,5 +1,6 @@
 from .common import run_command
 
+
 def analyze_js(file_path: str):
     output = {
         "language": "javascript",
@@ -7,7 +8,7 @@ def analyze_js(file_path: str):
         "security_issues": [],
         "format_suggestions": "",
         "raw_output": "",
-        "errors": []
+        "errors": [],
     }
 
     # --- ESLint ---
@@ -26,9 +27,6 @@ def analyze_js(file_path: str):
         diff_out, diff_err = run_command(format_cmd)
         output["format_suggestions"] = diff_out
 
-    output["raw_output"] = {
-        "eslint": eslint_out,
-        "prettier": prettier_out
-    }
+    output["raw_output"] = {"eslint": eslint_out, "prettier": prettier_out}
 
     return output

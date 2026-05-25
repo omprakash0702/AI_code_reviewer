@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 pydantic
+python-dotenv
 flake8
 pylint
 bandit==1.7.5
@@ -11,4 +12,5 @@ requests
 pytest
 pytest-asyncio
 pytest-mock
+pytest-cov
 Flask

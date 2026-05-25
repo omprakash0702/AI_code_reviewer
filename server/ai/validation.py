@@ -16,7 +16,7 @@ def normalize_issue(raw_issue: Any) -> Optional[Dict]:
             "type": "general",
             "line": None,
             "message": raw_issue,
-            "confidence": 0.5
+            "confidence": 0.5,
         }
 
     # If it's already a dict, pick the fields we need and coerce types
@@ -55,7 +55,7 @@ def normalize_issue(raw_issue: Any) -> Optional[Dict]:
             "type": raw_issue.get("type", "style"),
             "line": line,
             "message": str(msg),
-            "confidence": conf
+            "confidence": conf,
         }
 
     # unknown format
@@ -96,7 +96,4 @@ def validate_ai_output(ai_result: Dict) -> Dict:
         except Exception:
             patch = ""
 
-    return {
-        "issues": normalized,
-        "patch": patch
-    }
+    return {"issues": normalized, "patch": patch}

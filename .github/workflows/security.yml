@@ -1,0 +1,171 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Every Monday at 08:00 UTC — catch newly-disclosed CVEs
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write  # required for CodeQL SARIF upload
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # CodeQL — GitHub's SAST engine for Python + JavaScript
+  # ─────────────────────────────────────────────────────────────
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+
+  # ─────────────────────────────────────────────────────────────
+  # Python dependency vulnerability scan (pip-audit)
+  # ─────────────────────────────────────────────────────────────
+  python-deps:
+    name: Python dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit dependencies
+        run: |
+          pip install -r requirements.txt
+          pip-audit --requirement requirements.txt \
+            --format json \
+            --output pip-audit-report.json \
+            || true   # don't fail the job — annotate instead
+
+          python3 - <<'PYEOF'
+          import json, sys
+          with open("pip-audit-report.json") as f:
+              data = json.load(f)
+          vulns = data.get("vulnerabilities", [])
+          if not vulns:
+              print("✅ No known vulnerabilities in Python dependencies")
+              sys.exit(0)
+          print(f"⚠️  {len(vulns)} vulnerable package(s) found:")
+          for v in vulns:
+              pkg   = v.get("name", "?")
+              ver   = v.get("version", "?")
+              fixes = ", ".join(v.get("fix_versions", [])) or "no fix available"
+              ids   = ", ".join(a["id"] for a in v.get("aliases", []))
+              print(f"  • {pkg}=={ver}  →  fix: {fixes}  [{ids}]")
+              print(f"    ::warning::{pkg}=={ver} has known vulnerability {ids} — fix: {fixes}")
+          PYEOF
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-report
+          path: pip-audit-report.json
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────
+  # Frontend dependency audit (npm audit)
+  # ─────────────────────────────────────────────────────────────
+  npm-audit:
+    name: npm dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Audit for vulnerabilities
+        run: |
+          npm audit --json > npm-audit-report.json 2>&1 || true
+          node - <<'JSEOF'
+          const fs  = require('fs');
+          const raw = fs.readFileSync('npm-audit-report.json', 'utf8');
+          let data;
+          try { data = JSON.parse(raw); } catch { console.log('Could not parse npm audit output'); process.exit(0); }
+          const meta  = data.metadata?.vulnerabilities ?? {};
+          const total = Object.values(meta).reduce((s, n) => s + n, 0);
+          if (total === 0) {
+            console.log('✅ No vulnerabilities in npm dependencies');
+          } else {
+            const { critical = 0, high = 0, moderate = 0, low = 0 } = meta;
+            console.log(`⚠️  npm audit: critical=${critical} high=${high} moderate=${moderate} low=${low}`);
+            if (critical > 0 || high > 0) {
+              console.log(`::warning::npm audit found ${critical} critical and ${high} high severity vulnerabilities`);
+            }
+          }
+          JSEOF
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-report
+          path: frontend/npm-audit-report.json
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────
+  # Secret scanning — catch any accidentally committed secrets
+  # ─────────────────────────────────────────────────────────────
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets with gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: true

@@ -1,5 +1,6 @@
-from .python_analyzer import analyze_python
 from .js_analyzer import analyze_js
+from .python_analyzer import analyze_python
+
 
 def analyze_file(file_path):
     if file_path.endswith(".py"):
@@ -12,5 +13,5 @@ def analyze_file(file_path):
         "lint_issues": [],
         "security_issues": [],
         "format_suggestions": "",
-        "errors": ["Unsupported file type"]
+        "errors": ["Unsupported file type"],
     }

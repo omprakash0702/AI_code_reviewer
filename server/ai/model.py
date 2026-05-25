@@ -1,24 +1,25 @@
-import os
 import json
+import os
+
 import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class AISuggester:
     def __init__(self):
         self.api_key = os.getenv("AI_API_KEY")
         self.model_name = os.getenv("AI_MODEL", "gpt-4o-mini")
-        self.api_url = os.getenv("AI_API_URL", "https://api.openai.com/v1/chat/completions")
+        self.api_url = os.getenv(
+            "AI_API_URL", "https://api.openai.com/v1/chat/completions"
+        )
 
-        print("DEBUG API_KEY:", self.api_key)
-        print("DEBUG MODEL:", self.model_name)
-        print("DEBUG URL:", self.api_url)
 
     def generate_review(self, filename, code, analysis):
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
+            "Authorization": f"Bearer {self.api_key}",
         }
 
         prompt = f"""
@@ -74,24 +75,22 @@ Static Analysis:
 {analysis}
 """
 
-
         data = {
             "model": self.model_name,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
-            "temperature": 0.2
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2,
         }
 
         # OPENAI REQUEST
         response = httpx.post(self.api_url, headers=headers, json=data, timeout=30)
 
-        # 🔥 THIS IS ABSOLUTELY REQUIRED 🔥
-        print("DEBUG RESPONSE:", response.text)
-
         try:
             raw = response.json()["choices"][0]["message"]["content"]
+            # Strip markdown code fences the AI sometimes adds
+            for fence in ("```json", "```"):
+                if fence in raw:
+                    raw = raw.split(fence, 1)[1].rsplit("```", 1)[0].strip()
+                    break
             return json.loads(raw)
-        except Exception as e:
-            print("DEBUG PARSE ERROR:", e)
+        except Exception:
             return {"issues": [], "patch": ""}

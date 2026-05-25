@@ -1,13 +1,10 @@
 # server/diff/safe_apply.py
 import re
 
+
 def safe_apply_patch(original_code: str, patch_text: str):
     if not patch_text.strip():
-        return {
-            "success": False,
-            "patched_code": original_code,
-            "error": "Empty patch"
-        }
+        return {"success": False, "patched_code": original_code, "error": "Empty patch"}
 
     try:
         orig_lines = original_code.splitlines(keepends=True)
@@ -33,7 +30,7 @@ def safe_apply_patch(original_code: str, patch_text: str):
             return {
                 "success": False,
                 "patched_code": original_code,
-                "error": "No hunks found in patch"
+                "error": "No hunks found in patch",
             }
 
         out = []
@@ -47,7 +44,7 @@ def safe_apply_patch(original_code: str, patch_text: str):
                 return {
                     "success": False,
                     "patched_code": original_code,
-                    "error": "Invalid hunk header"
+                    "error": "Invalid hunk header",
                 }
 
             old_start = int(m.group(1)) - 1
@@ -73,15 +70,7 @@ def safe_apply_patch(original_code: str, patch_text: str):
             out.append(orig_lines[orig_index])
             orig_index += 1
 
-        return {
-            "success": True,
-            "patched_code": "".join(out),
-            "error": None
-        }
+        return {"success": True, "patched_code": "".join(out), "error": None}
 
     except Exception as e:
-        return {
-            "success": False,
-            "patched_code": original_code,
-            "error": str(e)
-        }
+        return {"success": False, "patched_code": original_code, "error": str(e)}

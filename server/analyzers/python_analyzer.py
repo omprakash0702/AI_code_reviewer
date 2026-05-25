@@ -1,5 +1,7 @@
-from .common import run_command
 import json
+
+from .common import run_command
+
 
 def analyze_python(file_path: str):
     output = {
@@ -8,7 +10,7 @@ def analyze_python(file_path: str):
         "security_issues": [],
         "format_suggestions": "",
         "raw_output": "",
-        "errors": []
+        "errors": [],
     }
 
     # --- flake8 lint ---
@@ -44,7 +46,7 @@ def analyze_python(file_path: str):
         "flake8": flake8_out,
         "pylint": pylint_out,
         "bandit": bandit_out,
-        "black": black_out
+        "black": black_out,
     }
 
     return output

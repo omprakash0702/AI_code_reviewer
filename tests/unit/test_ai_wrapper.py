@@ -1,11 +1,13 @@
 from server.ai.model import AISuggester
 
+
 class FakeResponse:
     def __init__(self, text):
         self.text = text
 
     def json(self):
         return {"choices": [{"message": {"content": self.text}}]}
+
 
 def fake_post(*args, **kwargs):
     return FakeResponse('{"issues":[],"patch":""}')
