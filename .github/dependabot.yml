@@ -19,7 +19,7 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
-  # npm — frontend dependencies
+  # npm — frontend dependencies (patch + minor only, no major version jumps)
   - package-ecosystem: npm
     directory: /frontend
     schedule:
@@ -30,10 +30,20 @@ updates:
     groups:
       react-ecosystem:
         patterns: ["react", "react-dom", "@types/react*"]
+        update-types: ["minor", "patch"]
       vite-ecosystem:
         patterns: ["vite", "@vitejs/*"]
+        update-types: ["minor", "patch"]
       ui-libs:
-        patterns: ["framer-motion", "lucide-react", "recharts", "clsx"]
+        patterns: ["framer-motion", "lucide-react", "recharts", "clsx", "tailwindcss", "autoprefixer", "postcss"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "framer-motion"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 5
     labels:
       - dependencies

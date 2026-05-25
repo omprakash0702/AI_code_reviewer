@@ -12,6 +12,12 @@ on:
         type: choice
         options: ["false", "true"]
 
+permissions:
+  contents: write
+  issues: write
+  pages: write
+  id-token: write
+
 # Only one deploy at a time — never race
 concurrency:
   group: deploy-${{ github.ref }}
