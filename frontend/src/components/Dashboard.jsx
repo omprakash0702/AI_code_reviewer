@@ -6,8 +6,11 @@ import RepoOverview from './RepoOverview'
 import SeverityChart from './SeverityChart'
 import IssuesPanel from './IssuesPanel'
 import PatchViewer from './PatchViewer'
+import CriticalAnalysis from './CriticalAnalysis'
 import AISummary from './AISummary'
 import AnalysisTimeline from './AnalysisTimeline'
+import FileInventory from './FileInventory'
+import ChatPanel from './ChatPanel'
 
 export default function Dashboard({ data, onReset }) {
   const [tab, setTab] = useState('overview')
@@ -19,7 +22,9 @@ export default function Dashboard({ data, onReset }) {
     { id: 'bugs',         label: `Bugs (${data.issues?.bugs?.length ?? 0})` },
     { id: 'code_quality', label: `Code Quality (${data.issues?.code_quality?.length ?? 0})` },
     { id: 'patches',      label: `Patches (${(data.file_results ?? []).filter(f => f.patch?.trim() || f.issues?.some(i => i.suggested_fix?.trim())).length})` },
+    { id: 'critical',     label: `Critical Analysis (${data.critical_analysis?.systemic_patterns?.length ?? 0})` },
     { id: 'summary',      label: 'AI Summary' },
+    { id: 'chat',         label: 'Ask AI' },
   ]
 
   return (
@@ -100,6 +105,7 @@ export default function Dashboard({ data, onReset }) {
                 <SeverityChart data={data} />
                 <RepoOverview intel={data.repository_intelligence} />
               </div>
+              <FileInventory inventory={data.file_inventory} />
               <AnalysisTimeline data={data} />
             </div>
           )}
@@ -118,8 +124,14 @@ export default function Dashboard({ data, onReset }) {
           {tab === 'patches' && (
             <PatchViewer fileResults={data.file_results ?? []} />
           )}
+          {tab === 'critical' && (
+            <CriticalAnalysis data={data} />
+          )}
           {tab === 'summary' && (
             <AISummary data={data} />
+          )}
+          {tab === 'chat' && (
+            <ChatPanel analysisId={data.analysis_id} />
           )}
         </motion.div>
       </main>

@@ -32,6 +32,41 @@ export function getCategoryMeta(category) {
   return map[category] ?? map.code_quality
 }
 
+// Aligns a block of removed lines against a block of added lines via LCS, so
+// lines that are identical on both sides render as unchanged context instead
+// of a full remove+add pair. O(n*m) — fine for the small hunks AI patches produce.
+function alignChangeBlock(removed, added) {
+  const n = removed.length
+  const m = added.length
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0))
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] = removed[i] === added[j]
+        ? dp[i + 1][j + 1] + 1
+        : Math.max(dp[i + 1][j], dp[i][j + 1])
+    }
+  }
+
+  const rows = []
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (removed[i] === added[j]) {
+      rows.push({ kind: 'context', text: removed[i] })
+      i++; j++
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      rows.push({ kind: 'removed', text: removed[i] })
+      i++
+    } else {
+      rows.push({ kind: 'added', text: added[j] })
+      j++
+    }
+  }
+  while (i < n) { rows.push({ kind: 'removed', text: removed[i] }); i++ }
+  while (j < m) { rows.push({ kind: 'added', text: added[j] }); j++ }
+  return rows
+}
+
 export function parseDiff(patch) {
   if (!patch?.trim()) return null
   const lines = patch.split('\n')
@@ -41,9 +76,30 @@ export function parseDiff(patch) {
   let rightNum = 1
   let inHunk = false
 
+  const flushChangeBlock = (removed, added) => {
+    for (const row of alignChangeBlock(removed, added)) {
+      if (row.kind === 'context') {
+        left.push({ type: 'context', content: row.text, lineNum: leftNum++ })
+        right.push({ type: 'context', content: row.text, lineNum: rightNum++ })
+      } else if (row.kind === 'removed') {
+        left.push({ type: 'removed', content: row.text, lineNum: leftNum++ })
+        right.push({ type: 'placeholder', content: '', lineNum: null })
+      } else {
+        left.push({ type: 'placeholder', content: '', lineNum: null })
+        right.push({ type: 'added', content: row.text, lineNum: rightNum++ })
+      }
+    }
+    removed.length = 0
+    added.length = 0
+  }
+
+  let pendingRemoved = []
+  let pendingAdded = []
+
   for (const line of lines) {
     if (line.startsWith('---') || line.startsWith('+++')) continue
     if (line.startsWith('@@')) {
+      flushChangeBlock(pendingRemoved, pendingAdded)
       const m1 = line.match(/@@ -(\d+)/)
       const m2 = line.match(/\+(\d+)/)
       if (m1) leftNum = parseInt(m1[1], 10)
@@ -56,17 +112,17 @@ export function parseDiff(patch) {
     if (!inHunk) continue
 
     if (line.startsWith('-')) {
-      left.push({ type: 'removed', content: line.slice(1), lineNum: leftNum++ })
-      right.push({ type: 'placeholder', content: '', lineNum: null })
+      pendingRemoved.push(line.slice(1))
     } else if (line.startsWith('+')) {
-      left.push({ type: 'placeholder', content: '', lineNum: null })
-      right.push({ type: 'added', content: line.slice(1), lineNum: rightNum++ })
+      pendingAdded.push(line.slice(1))
     } else {
+      flushChangeBlock(pendingRemoved, pendingAdded)
       const content = line.startsWith(' ') ? line.slice(1) : line
       left.push({ type: 'context', content, lineNum: leftNum++ })
       right.push({ type: 'context', content, lineNum: rightNum++ })
     }
   }
+  flushChangeBlock(pendingRemoved, pendingAdded)
 
   if (!left.length) return null
   return { left, right }

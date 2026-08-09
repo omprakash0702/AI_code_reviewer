@@ -70,6 +70,12 @@ jobs:
           AI_API_KEY: dummy-key-for-unit-tests
           AI_MODEL: gpt-4o-mini
 
+      - name: Integration tests
+        run: pytest tests/integration -q --tb=short
+        env:
+          AI_API_KEY: dummy-key-for-unit-tests
+          AI_MODEL: gpt-4o-mini
+
       - name: Annotate coverage summary
         if: matrix.python-version == '3.11'
         run: |

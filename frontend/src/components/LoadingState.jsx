@@ -2,39 +2,35 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Shield } from 'lucide-react'
 
-// Real pipeline steps — shown sequentially based on elapsed time.
-// These reflect what the backend actually does; timing is approximate.
-const STEPS = [
-  { label: 'Cloning repository via git…',           minMs: 0     },
-  { label: 'Scanning and filtering source files…',  minMs: 5000  },
-  { label: 'Running static analysis (lint/bandit)…',minMs: 9000  },
-  { label: 'AI reviewing files — this takes a while…', minMs: 14000 },
-  { label: 'Generating repository intelligence…',   minMs: 35000 },
-  { label: 'Calculating health score…',             minMs: 45000 },
-  { label: 'Building final report…',                minMs: 50000 },
-]
+function formatDuration(seconds) {
+  if (seconds == null) return null
+  if (seconds < 60) return `~${Math.max(1, Math.round(seconds))}s`
+  const mins = Math.round(seconds / 60)
+  return `~${mins} min`
+}
 
-export default function LoadingState() {
-  const [elapsed, setElapsed] = useState(0)   // ms since mount
-  const [stepIdx, setStepIdx] = useState(0)
+export default function LoadingState({ analysisStatus, progress, fileInventory, etaSeconds }) {
+  const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
     const t0 = Date.now()
-    const id = setInterval(() => {
-      const ms = Date.now() - t0
-      setElapsed(ms)
-      // advance to the last step whose minMs has been reached
-      for (let i = STEPS.length - 1; i >= 0; i--) {
-        if (ms >= STEPS[i].minMs) { setStepIdx(i); break }
-      }
-    }, 500)
+    const id = setInterval(() => setElapsed(Date.now() - t0), 500)
     return () => clearInterval(id)
   }, [])
 
-  // A gentle progress bar that grows logarithmically — honest about uncertainty
-  const progress = Math.min(92, Math.log1p(elapsed / 1000) * 18)
-
   const elapsedSec = Math.floor(elapsed / 1000)
+  const hasProgress = progress && progress.total > 0
+  const pct = hasProgress ? Math.min(100, Math.round((progress.done / progress.total) * 100)) : 0
+  const etaLabel = formatDuration(etaSeconds)
+
+  const stepLabel =
+    analysisStatus === 'cloning' || !fileInventory
+      ? 'Cloning repository and scanning files… (can take a while on a slow connection)'
+      : !hasProgress || progress.done === 0
+      ? 'Starting AI review…'
+      : progress.done >= progress.total
+      ? 'Finishing up — building final report…'
+      : `Reviewing ${progress.current_file ?? '…'}`
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -69,79 +65,68 @@ export default function LoadingState() {
         <h2 className="text-2xl font-bold text-white mb-1">Analyzing Repository</h2>
         <p className="text-xs mb-6" style={{ color: '#6b7280' }}>
           elapsed: {elapsedSec}s
+          {etaLabel && <> · estimated time remaining: <span style={{ color: '#93c5fd' }}>{etaLabel}</span></>}
         </p>
 
-        {/* Current step */}
+        {/* Current step — driven by real backend progress, not a guess */}
         <motion.p
-          key={stepIdx}
+          key={stepLabel}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-sm mb-6"
+          className="text-sm mb-6 font-mono truncate"
           style={{ color: '#9ca3af' }}
         >
-          {STEPS[stepIdx].label}
+          {stepLabel}
         </motion.p>
 
-        {/* Progress bar — logarithmic, never reaches 100 until done */}
+        {/* Progress bar — real done/total once the job starts, indeterminate before that */}
         <div
           className="rounded-full h-1.5 mb-3 overflow-hidden"
           style={{ backgroundColor: '#1f2937' }}
         >
-          <motion.div
-            className="h-full rounded-full"
-            style={{
-              width: `${progress}%`,
-              background: 'linear-gradient(90deg,#3b82f6,#6366f1,#8b5cf6)',
-            }}
-            transition={{ duration: 0.5, ease: 'linear' }}
-          />
+          {hasProgress ? (
+            <motion.div
+              className="h-full rounded-full"
+              style={{
+                background: 'linear-gradient(90deg,#3b82f6,#6366f1,#8b5cf6)',
+              }}
+              initial={{ width: 0 }}
+              animate={{ width: `${pct}%` }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            />
+          ) : (
+            <motion.div
+              className="h-full rounded-full"
+              style={{ width: '30%', background: 'linear-gradient(90deg,#3b82f6,#6366f1,#8b5cf6)' }}
+              animate={{ x: ['-100%', '250%'] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
+            />
+          )}
         </div>
 
-        {/* Step pipeline */}
-        <div className="mt-8 text-left space-y-2">
-          {STEPS.map((step, i) => {
-            const done    = i < stepIdx
-            const active  = i === stepIdx
-            const pending = i > stepIdx
-            return (
-              <div
-                key={i}
-                className="flex items-center gap-3 text-xs"
-                style={{ opacity: pending ? 0.35 : 1 }}
-              >
-                <div
-                  className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center text-xs font-bold"
-                  style={{
-                    backgroundColor: done
-                      ? '#3b82f6'
-                      : active
-                      ? '#6366f1'
-                      : '#374151',
-                    color: '#fff',
-                  }}
-                >
-                  {done ? '✓' : i + 1}
-                </div>
-                <span
-                  style={{
-                    color: done ? '#9ca3af' : active ? '#e2e8f0' : '#6b7280',
-                  }}
-                >
-                  {step.label}
-                </span>
-                {active && (
-                  <motion.span
-                    animate={{ opacity: [1, 0.3, 1] }}
-                    transition={{ duration: 1.2, repeat: Infinity }}
-                    style={{ color: '#6366f1' }}
-                  >
-                    ●
-                  </motion.span>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        {hasProgress && (
+          <p className="text-xs mb-6" style={{ color: '#6b7280' }}>
+            {progress.done} / {progress.total} files reviewed ({pct}%)
+          </p>
+        )}
+
+        {/* File inventory summary — shown as soon as scanning completes */}
+        {fileInventory && (
+          <div
+            className="mt-6 rounded-xl p-4 text-left text-xs space-y-1"
+            style={{ backgroundColor: '#111827', border: '1px solid #1f2937', color: '#9ca3af' }}
+          >
+            <p>
+              <span className="text-white font-semibold">{fileInventory.total_files}</span> files found in repo
+            </p>
+            <p>
+              <span className="text-white font-semibold">{fileInventory.supported}</span> eligible for AI review
+              {fileInventory.total_files > fileInventory.supported && (
+                <> · {fileInventory.total_files - fileInventory.supported} skipped (other file types)</>
+              )}
+            </p>
+          </div>
+        )}
 
         <p className="text-xs mt-8" style={{ color: '#4b5563' }}>
           Backend logs → <code style={{ color: '#6b7280' }}>logs/pr_guardian.log</code>

@@ -46,9 +46,13 @@ IMPORTANT — DIFF RULES (MUST FOLLOW):
 3. Every change hunk MUST include a hunk header line using @@, e.g.:
    @@ -1,2 +1,2 @@
 4. Hunks MUST contain explicit removed lines starting with '-' and added lines starting with '+'.
+   There is NO space between the '-'/'+' marker and the code that follows it —
+   '+x = 1' is correct, '+ x = 1' is WRONG and will corrupt the file with a
+   stray leading space when applied (only include a space there if the actual
+   source line itself starts with a space, e.g. an indented line).
    Example:
-   - x=1
-   + x = 1
+   -x=1
+   +x = 1
 5. The patch MUST NOT contain Python f-strings using braces {{}}, and MUST NOT include unescaped braces.
 6. Do NOT return plain file content — always return a proper unified diff with at least one '-' and one '+' line per hunk.
 7. "issues" MUST be an array of OBJECTS (not strings). Line MUST be an integer or null. Confidence MUST be float.
@@ -58,10 +62,10 @@ Example patch (literal example you MUST follow exactly):
 --- a/{filename}
 +++ b/{filename}
 @@ -1,2 +1,2 @@
-- x=1
-+ x = 1
-- print('Hi')
-+ print("Hi")
+-x=1
++x = 1
+-print('Hi')
++print("Hi")
 
 NOW review the file:
 

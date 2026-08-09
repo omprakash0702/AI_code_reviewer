@@ -58,9 +58,8 @@ jobs:
             echo "First release — showing all commits"
           fi
 
-          python3 - "$RANGE" <<'PYEOF'
+          python3 - "$RANGE" > changelog.md <<'PYEOF'
           import subprocess, sys, re
-          from datetime import datetime
 
           range_arg = sys.argv[1]
           log = subprocess.check_output(
@@ -79,6 +78,12 @@ jobs:
               "ci":       "⚙️",
               "chore":    "🔧",
               "build":    "📦",
+          }
+          label_map = {
+              "feat": "New Features", "fix": "Bug Fixes",
+              "security": "Security", "perf": "Performance",
+              "refactor": "Refactoring", "docs": "Documentation",
+              "test": "Tests", "ci": "CI/CD", "chore": "Chores", "build": "Build",
           }
 
           sections = {k: [] for k in EMOJIS}
@@ -102,12 +107,6 @@ jobs:
                   other.append(f"- {subject} (`{sha}`)")
 
           lines = [f"## What's Changed\n"]
-          label_map = {
-              "feat": "New Features", "fix": "Bug Fixes",
-              "security": "Security", "perf": "Performance",
-              "refactor": "Refactoring", "docs": "Documentation",
-              "test": "Tests", "ci": "CI/CD", "chore": "Chores", "build": "Build",
-          }
           for key, items in sections.items():
               if items:
                   lines.append(f"\n### {EMOJIS[key]} {label_map[key]}\n")
@@ -120,51 +119,6 @@ jobs:
               lines.append("_No changes recorded._")
 
           print("\n".join(lines))
-          PYEOF
-          > changelog.md
-          python3 - "$RANGE" >> changelog.md <<'PYEOF'
-          import subprocess, sys, re
-
-          range_arg = sys.argv[1]
-          log = subprocess.check_output(
-              ["git", "log", range_arg, "--pretty=format:%H|%s|%an", "--no-merges"],
-              text=True
-          ).strip()
-
-          EMOJIS = {
-              "feat":"✨","fix":"🐛","security":"🔒","perf":"⚡",
-              "refactor":"♻️","docs":"📝","test":"🧪","ci":"⚙️",
-              "chore":"🔧","build":"📦",
-          }
-          label_map = {
-              "feat":"New Features","fix":"Bug Fixes","security":"Security",
-              "perf":"Performance","refactor":"Refactoring","docs":"Documentation",
-              "test":"Tests","ci":"CI/CD","chore":"Chores","build":"Build",
-          }
-          sections = {k: [] for k in EMOJIS}
-          other = []
-          for line in log.splitlines():
-              if not line.strip(): continue
-              parts = line.split("|", 2)
-              if len(parts) < 2: continue
-              sha, subject = parts[0][:7], parts[1]
-              matched = False
-              for prefix, emoji in EMOJIS.items():
-                  if re.match(rf"^{prefix}[\(\!:]", subject, re.IGNORECASE):
-                      sections[prefix].append(f"- {emoji} {subject} (`{sha}`)")
-                      matched = True; break
-              if not matched:
-                  other.append(f"- {subject} (`{sha}`)")
-          out = ["## What's Changed\n"]
-          for key, items in sections.items():
-              if items:
-                  out.append(f"\n### {EMOJIS[key]} {label_map[key]}\n")
-                  out.extend(items)
-          if other:
-              out.append("\n### 🔀 Other\n"); out.extend(other)
-          if not any(sections.values()) and not other:
-              out.append("_No changes recorded._")
-          print("\n".join(out))
           PYEOF
 
       # ── Create GitHub Release ────────────────────────────────

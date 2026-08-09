@@ -66,15 +66,30 @@ function IssueCard({ issue, index }) {
             <div className="p-4 space-y-4" style={{ backgroundColor: '#0d1117' }}>
               <Section title="Why it matters" text={issue.description} />
               {issue.impact && <Section title="Impact" text={issue.impact} />}
-              {issue.suggested_fix && (
-                <div>
-                  <p className="text-xs uppercase tracking-wider mb-2" style={{ color: '#6b7280' }}>Suggested Fix</p>
-                  <pre
-                    className="text-sm rounded-lg p-3 font-mono whitespace-pre-wrap break-all"
-                    style={{ backgroundColor: 'rgba(34,197,94,0.07)', color: '#86efac', border: '1px solid rgba(34,197,94,0.2)' }}
-                  >
-                    {issue.suggested_fix}
-                  </pre>
+              {(issue.code_snippet || issue.suggested_fix) && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {issue.code_snippet && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wider mb-2" style={{ color: '#6b7280' }}>Current Code</p>
+                      <pre
+                        className="text-sm rounded-lg p-3 font-mono whitespace-pre-wrap break-all overflow-x-auto"
+                        style={{ backgroundColor: 'rgba(239,68,68,0.07)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)' }}
+                      >
+                        {issue.code_snippet}
+                      </pre>
+                    </div>
+                  )}
+                  {issue.suggested_fix && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wider mb-2" style={{ color: '#6b7280' }}>Fixed Code</p>
+                      <pre
+                        className="text-sm rounded-lg p-3 font-mono whitespace-pre-wrap break-all overflow-x-auto"
+                        style={{ backgroundColor: 'rgba(34,197,94,0.07)', color: '#86efac', border: '1px solid rgba(34,197,94,0.2)' }}
+                      >
+                        {issue.suggested_fix}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

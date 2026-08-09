@@ -50,17 +50,19 @@ def safe_apply_patch(original_code: str, patch_text: str):
             old_start = int(m.group(1)) - 1
 
             # Add code before hunk
-            while orig_index < old_start:
+            while orig_index < old_start and orig_index < len(orig_lines):
                 out.append(orig_lines[orig_index])
                 orig_index += 1
 
             # Apply hunk body
             for line in hunk[1:]:
                 if line.startswith(" "):
-                    out.append(orig_lines[orig_index])
-                    orig_index += 1
+                    if orig_index < len(orig_lines):
+                        out.append(orig_lines[orig_index])
+                        orig_index += 1
                 elif line.startswith("-"):
-                    orig_index += 1
+                    if orig_index < len(orig_lines):
+                        orig_index += 1
                 elif line.startswith("+"):
                     content = line[1:] + "\n"
                     out.append(content)

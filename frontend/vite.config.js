@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: {
       '/review': 'http://localhost:8000',
       '/analyze-repo': 'http://localhost:8000',
+      '/analysis': 'http://localhost:8000',
     },
   },
 })

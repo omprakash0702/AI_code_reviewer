@@ -288,6 +288,10 @@ PYEOF
             echo "::warning::Some hunks failed to apply — commit whatever did apply"
           }
 
+          # --reject leaves *.rej files behind for hunks that didn't apply —
+          # these are debugging artifacts, not something to ship in the fix PR.
+          find . -name "*.rej" -not -path "./.git/*" -delete
+
           # Only create a PR if there are actual changes
           if git diff --quiet && git diff --cached --quiet; then
             echo "Patch applied no net changes — skipping fix PR."
