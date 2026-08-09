@@ -12,6 +12,8 @@ The idea is simple: most developers don't have time to review every file in a co
 
 It also integrates with GitHub Actions so every pull request in your own repository gets reviewed automatically, with a bot comment summarising findings and an optional auto-fix branch opened with AI-generated patches applied.
 
+> **⚠️ CI/CD status: work in progress.** The `CI`, `ai-code-review`, and `deploy` workflows are currently failing on `main` after the recent async-architecture rewrite (new dependencies, new endpoints, new env vars they haven't caught up to yet). `security.yml` and the GitHub Pages deploy are passing. Don't treat the GitHub Actions integration described below as verified working until these are green again.
+
 ---
 
 ## What it can do
@@ -28,7 +30,7 @@ It also integrates with GitHub Actions so every pull request in your own reposit
 - **AI insights** — generates 4 specific architectural observations about the repo (not generic advice — observations specific to that codebase)
 - **Side-by-side patch viewer** — shows current code vs AI-suggested fix with line-level diff highlighting
 - **PR recommendation** — gives an Approve or Request Changes verdict with a confidence percentage and bullet-point reasoning
-- **GitHub Actions integration** — automatically reviews every PR in your repo, posts a structured comment, and opens a draft fix branch with patches applied
+- **GitHub Actions integration** — automatically reviews every PR in your repo, posts a structured comment, and opens a draft fix branch with patches applied *(⚠️ work in progress — currently failing on `main`, see status note above)*
 - **Uptime monitoring** — pings the API every 15 minutes and automatically opens a GitHub issue if it goes down
 
 ---
@@ -183,11 +185,11 @@ aicodereviewer/
 │
 └── .github/
     └── workflows/
-        ├── ci.yml              # Lint + unit + integration tests + frontend build on every push/PR
-        ├── ai-code-review.yml  # AI reviews every PR, posts comment, opens fix branch
-        ├── deploy.yml          # Deploy to Render (backend) + GitHub Pages (frontend)
-        ├── security.yml        # CodeQL + pip-audit + npm audit + secret scan
-        ├── monitor.yml         # Health check every 15 min, auto issue on outage
+        ├── ci.yml              # Lint + unit + integration tests + frontend build on every push/PR — ⚠️ failing, WIP
+        ├── ai-code-review.yml  # AI reviews every PR, posts comment, opens fix branch — ⚠️ failing, WIP
+        ├── deploy.yml          # Deploy to Render (backend) + GitHub Pages (frontend) — ⚠️ failing, WIP
+        ├── security.yml        # CodeQL + pip-audit + npm audit + secret scan — passing
+        ├── monitor.yml         # Health check every 15 min, auto issue on outage — passing
         └── release.yml         # Changelog + GitHub Release on version tags
 ```
 
