@@ -6,7 +6,7 @@ slowapi
 redis
 flake8
 pylint
-bandit==1.7.5
+bandit==1.9.4
 black
 httpx
 pytest
